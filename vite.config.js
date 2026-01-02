@@ -7,5 +7,10 @@ export default defineConfig(({ command }) => {
   return {
     plugins: [react()],
     base: base,
+    server: {
+      headers: {
+        'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+      }
+    }
   }
 })
