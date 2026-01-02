@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import './index.css';
 import { 
   Plus, 
   MessageSquare, 
