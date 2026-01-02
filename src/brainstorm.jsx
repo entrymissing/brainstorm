@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createRoot } from 'react-dom/client';
 import './index.css';
 import { 
   Plus, 
@@ -772,5 +773,15 @@ export default function App() {
       </div>
 
     </div>
+  );
+}
+
+// If this file is included directly in the HTML, mount the app into #root.
+const rootEl = typeof document !== 'undefined' ? document.getElementById('root') : null;
+if (rootEl) {
+  createRoot(rootEl).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
   );
 }
