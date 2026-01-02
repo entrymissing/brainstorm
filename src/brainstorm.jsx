@@ -29,9 +29,10 @@ import {
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
-  signInAnonymously, 
   onAuthStateChanged,
-  signInWithCustomToken
+  signInWithPopup,
+  signOut,
+  GoogleAuthProvider
 } from "firebase/auth";
 import { 
   getFirestore, 
@@ -240,21 +241,34 @@ export default function App() {
     };
   }, [isDarkMode]);
 
-  // 1. Auth Init
+  // 1. Auth Init - Listen for user status
   useEffect(() => {
-    const initAuth = async () => {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        await signInWithCustomToken(auth, __initial_auth_token);
-      } else {
-        await signInAnonymously(auth);
-      }
-    };
-    initAuth();
     const unsubscribe = onAuthStateChanged(auth, setUser);
     return () => unsubscribe();
   }, []);
 
-  // 2. Fetch Topics
+  // 2. Login Handler - Google Auth
+  const handleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Login failed", error);
+      alert(error.message);
+    }
+  };
+
+  // 3. Logout Handler
+  const handleLogout = async () => {
+    setTopics([]);
+    setSelectedTopicId(null);
+    setSummary("");
+    setPendingNotes([]);
+    setProcessedNotes([]);
+    await signOut(auth);
+  };
+
+  // 4. Fetch Topics
   useEffect(() => {
     if (!user) return;
     const q = query(
@@ -434,6 +448,28 @@ export default function App() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  // Show login screen if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 max-w-sm w-full text-center">
+          <div className="mb-6 bg-indigo-100 p-3 rounded-full w-fit mx-auto text-indigo-600">
+            <Cpu size={32} />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Brainstorm</h1>
+          <p className="text-gray-500 mb-8">Sign in with Google to access your notes.</p>
+          
+          <button 
+            onClick={handleLogin}
+            className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
+          >
+            <span>Sign in with Google</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex h-screen w-full font-sans overflow-hidden transition-colors duration-300 ${theme.bgApp} ${theme.textPrimary}`}>
       
@@ -582,13 +618,25 @@ export default function App() {
         </div>
 
         {/* --- Sidebar Footer (Settings) --- */}
-        <div className={`p-4 border-t ${theme.border}`}>
+        <div className={`p-4 border-t ${theme.border} space-y-2`}>
           <button 
             onClick={handleClearApiKey}
             className={`flex items-center gap-2 text-xs ${theme.textSecondary} hover:${theme.textPrimary} transition-colors w-full`}
           >
             <Settings className="w-3.5 h-3.5" />
             <span>Update API Key</span>
+          </button>
+          
+          <div className="text-[10px] text-slate-400 mt-3 pb-2">
+            <span>{user.email}</span>
+          </div>
+          
+          <button 
+            onClick={handleLogout}
+            className={`flex items-center gap-2 text-xs text-red-500 hover:text-red-600 transition-colors w-full`}
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign Out</span>
           </button>
         </div>
       </div>
